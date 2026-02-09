@@ -1,9 +1,14 @@
 import pytest
 
 from src.utils.models.models import LANGCHAIN, LLAMAINDEX
-from src.utils.models.models import REMOTE_QWEN, REMOTE_LLAMA3, REMOTE_OPENAI
+from src.utils.models.models import (
+    REMOTE_QWEN,
+    REMOTE_LLAMA3,
+    REMOTE_OPENAI,
+    LOCAL_LLAMA3,
+)
 
-from src.utils.models.models import get_remote_llm
+from src.utils.models.models import get_remote_llm, get_local_llm
 
 from dotenv import load_dotenv
 
@@ -11,13 +16,15 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-@pytest.mark.parametrize("model_name", [
-    REMOTE_LLAMA3,
-    REMOTE_QWEN,
-    REMOTE_OPENAI,
+@pytest.mark.parametrize("model_name, local", [
+    (REMOTE_LLAMA3, False),
+    (REMOTE_QWEN, False),
+    (REMOTE_OPENAI, False),
+    (LOCAL_LLAMA3, True),
 ])
-def test_llamaindex_llm_call(model_name):
-    llm = get_remote_llm(model_name, LLAMAINDEX)
+def test_llamaindex_llm_call(model_name, local):
+    llm = (get_local_llm(model_name, LLAMAINDEX)
+           if local else get_remote_llm(model_name, LLAMAINDEX))
 
     try:
         response = llm.complete("Hello")
@@ -26,13 +33,15 @@ def test_llamaindex_llm_call(model_name):
         pytest.fail(f"LLAMAINDEX model '{model_name}' call failed: {e}")
 
 
-@pytest.mark.parametrize("model_name", [
-    REMOTE_LLAMA3,
-    REMOTE_QWEN,
-    REMOTE_OPENAI,
+@pytest.mark.parametrize("model_name, local", [
+    (REMOTE_LLAMA3, False),
+    (REMOTE_QWEN, False),
+    (REMOTE_OPENAI, False),
+    (LOCAL_LLAMA3, True),
 ])
-def test_langchain_llm_call(model_name):
-    llm = get_remote_llm(model_name, LANGCHAIN)
+def test_langchain_llm_call(model_name, local: bool):
+    llm = (get_local_llm(model_name, LANGCHAIN)
+           if local else get_remote_llm(model_name, LANGCHAIN))
 
     try:
         response = llm.invoke("Hello").text

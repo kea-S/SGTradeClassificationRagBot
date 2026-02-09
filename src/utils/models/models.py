@@ -1,8 +1,10 @@
 from llama_index.llms.groq import Groq
 from llama_index.llms.openai import OpenAI
+from llama_index.llms.ollama import Ollama
 
 from langchain_groq import ChatGroq
 from langchain_openai import ChatOpenAI
+from langchain_ollama import ChatOllama
 
 from dotenv import load_dotenv
 
@@ -18,6 +20,8 @@ REMOTE_LLAMA3 = "llama-3.3-70b-versatile"
 REMOTE_QWEN = "qwen/qwen3-32b"   # mixtral is deprecated
 REMOTE_OPENAI = "gpt-4o"
 
+LOCAL_LLAMA3 = "llama3.1:latest"
+
 
 def get_remote_llm(name: str, framework: str):
     if name == REMOTE_OPENAI and framework == LANGCHAIN:
@@ -31,4 +35,13 @@ def get_remote_llm(name: str, framework: str):
 
 
 def get_local_llm(name: str, framework: str):
-    pass
+    if framework == LANGCHAIN:
+        return ChatOllama(
+            model=name
+        )
+    if framework == LLAMAINDEX:
+        return Ollama(
+            model=name,
+            request_timeout=120.0,
+            context_window=8000
+        )
