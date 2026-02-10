@@ -1,4 +1,5 @@
 from src.parser.ingestion import build_and_persist_index
+from llama_index.core import StorageContext, load_index_from_storage, VectorStoreIndex
 
 
 def test_build_and_persist_index_success(tmp_path):
@@ -23,9 +24,6 @@ def test_build_and_persist_index_success(tmp_path):
     # persisted directory should contain at least one file
     entries = list(processed_dir.iterdir())
     assert len(entries) > 0, "Persisted index directory is empty"
-
-    # attempt to reload the index using the official API
-    from llama_index.core import StorageContext, load_index_from_storage, VectorStoreIndex
 
     storage_context = StorageContext.from_defaults(persist_dir=str(processed_dir))
     loaded = load_index_from_storage(storage_context, index_id=f"{md_dir.stem}_index")
