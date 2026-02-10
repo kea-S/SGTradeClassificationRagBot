@@ -208,3 +208,5 @@ __marimo__/
 
 .DS_Store
 .vectorcode
+data/intermediate/*
+data/processed/*
