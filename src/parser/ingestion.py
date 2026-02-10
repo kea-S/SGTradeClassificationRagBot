@@ -1,3 +1,5 @@
+from config import RAW_DATA_DIR, INTERMEDIATE_DATA_DIR, PROCESSED_DATA_DIR
+
 import logging
 from dotenv import load_dotenv
 from pathlib import Path
@@ -95,14 +97,24 @@ def main(
 ) -> None:
     """
     Simple script entrypoint.
-    If no pdf_path is provided, defaults to data/raw/stcced2022.pdf in the repository root.
-    The markdown and index will be placed into data/processed/.
+
+    Priority:
+      1) explicit data_dir arg (treated as base data directory)
+      2) values imported from config (RAW_DIR / INTERMEDIATE_DIR / PROCESSED_DIR)
     """
-    repo_root = Path(__file__).resolve().parents[2]  # project root
-    data_dir = (Path(data_dir) if data_dir else repo_root / "data").resolve()
-    raw_dir = data_dir / "raw"
-    intermediate_dir = data_dir / "intermediate"
-    processed_dir = data_dir / "processed"
+    if data_dir:
+        base = Path(data_dir).resolve()
+        raw_dir = base / "raw"
+        intermediate_dir = base / "intermediate"
+        processed_dir = base / "processed"
+    else:
+        raw_dir = RAW_DATA_DIR
+        intermediate_dir = INTERMEDIATE_DATA_DIR
+        processed_dir = PROCESSED_DATA_DIR
+
+    # ensure directories exist where we will write
+    intermediate_dir.mkdir(parents=True, exist_ok=True)
+    processed_dir.mkdir(parents=True, exist_ok=True)
 
     pdf_path = Path(pdf_path) if pdf_path else raw_dir / "stcced2022.pdf"
 
