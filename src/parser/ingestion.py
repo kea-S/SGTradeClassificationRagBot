@@ -4,7 +4,8 @@ from pathlib import Path
 from typing import Optional
 
 from llama_index.core import SimpleDirectoryReader, VectorStoreIndex
-from llama_index.core.node_parser import MarkdownNodeParser
+from llama_index.core.ingestion import IngestionPipeline
+from llama_index.core.node_parser import MarkdownNodeParser, TokenTextSplitter
 
 from pymupdf4llm import to_markdown
 
@@ -49,14 +50,27 @@ def build_and_persist_index(md_dir: Path, index_out_dir: Path) -> Path:
         raise ValueError(f"md_dir must be an existing directory containing markdown files: {md_dir}")
 
     index_out_dir = Path(index_out_dir).resolve()
-    index_dir = index_out_dir / f"{md_dir.stem}_index"
-    index_dir.mkdir(parents=True, exist_ok=True)
+    index_out_dir.mkdir(parents=True, exist_ok=True)
 
     logger.info("Loading documents from markdown directory %s", md_dir)
     documents = SimpleDirectoryReader(str(md_dir)).load_data()
 
+    # split long chunks
+    text_splitter = TokenTextSplitter(
+        chunk_size=1024,
+        chunk_overlap=128
+    )
+
     parser = MarkdownNodeParser()
-    nodes = parser.get_nodes_from_documents(documents)
+
+    pipeline = IngestionPipeline(
+        transformations=[
+            parser,
+            text_splitter
+        ]
+    )
+
+    nodes = pipeline.run(documents=documents)
 
     logger.info("Building VectorStoreIndex from parsed nodes")
 
@@ -68,9 +82,10 @@ def build_and_persist_index(md_dir: Path, index_out_dir: Path) -> Path:
     # Official persistence: set index id and persist storage_context
     index_id = f"{md_dir.stem}_index"
     index.set_index_id(index_id)
-    index.storage_context.persist(persist_dir=str(index_dir))
-    logger.info("Index persisted to %s using storage_context.persist", index_dir)
-    return index_dir
+    index.storage_context.persist(persist_dir=str(index_out_dir))
+    logger.info("Index persisted to %s using storage_context.persist", index_out_dir)
+
+    return index_out_dir
 
 
 def main(
@@ -86,6 +101,7 @@ def main(
     repo_root = Path(__file__).resolve().parents[2]  # project root
     data_dir = (Path(data_dir) if data_dir else repo_root / "data").resolve()
     raw_dir = data_dir / "raw"
+    intermediate_dir = data_dir / "intermediate"
     processed_dir = data_dir / "processed"
 
     pdf_path = Path(pdf_path) if pdf_path else raw_dir / "stcced2022.pdf"
@@ -93,7 +109,7 @@ def main(
     if not pdf_path.exists():
         raise FileNotFoundError(f"PDF not found at {pdf_path}")
 
-    md_file = pdf_to_markdown(pdf_path, processed_dir)
+    md_file = pdf_to_markdown(pdf_path, intermediate_dir)
 
     # build_and_persist_index now expects a directory containing markdown files
     md_dir = md_file.parent
