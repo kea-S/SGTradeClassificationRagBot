@@ -2,7 +2,8 @@ import pytest
 
 from dotenv import load_dotenv
 
-from src.agents.naive_agent import naive_agent
+from src.agents.naive_agent import get_naive_agent
+from src.utils.models.models import REMOTE_LLAMA3
 from src.tools.RAGTool import rag_tool
 from llama_index.core.agent.workflow import FunctionAgent
 
@@ -11,6 +12,8 @@ load_dotenv()
 
 @pytest.mark.asyncio
 async def test_naive_agent_integration_call():
+    naive_agent = get_naive_agent(REMOTE_LLAMA3, False)
+
     # basic sanity checks
     assert naive_agent is not None
     assert isinstance(naive_agent, FunctionAgent)
