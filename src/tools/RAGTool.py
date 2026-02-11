@@ -1,6 +1,6 @@
 from langchain_core.tools import tool
 from llama_index.core import StorageContext, load_index_from_storage, get_response_synthesizer
-from llama_index.core.query_engine import RetrieverQueryEngine 
+from llama_index.core.query_engine import RetrieverQueryEngine
 
 from llama_index.core.retrievers import VectorIndexRetriever
 
@@ -40,14 +40,6 @@ def rag_tool(question: str, top_k: int = 5, include_sources: bool = False) -> st
       str: The answer as a string. If include_sources is True and sources are found, the answer
            will have a "Sources:" section appended. On error the function returns a string
            beginning with "RAG tool error: " followed by the exception message.
-
-    Notes:
-      - This function depends on the global INDEX and the VectorIndexRetriever class being available
-        in the module scope.
-      - Source extraction is best-effort and guarded against different library versions and node
-        shapes; failures in extracting sources are silently ignored (no exception propagated).
-      - The function is decorated with @tool; ensure the decorator is imported/available in this
-        environment if you expect tool-specific behavior.
 
     Example:
       rag_tool("Summarize the contract terms", top_k=3, include_sources=True)
