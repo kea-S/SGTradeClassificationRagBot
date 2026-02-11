@@ -1,5 +1,6 @@
 from config import RAW_DATA_DIR, INTERMEDIATE_DATA_DIR, PROCESSED_DATA_DIR
 
+from datetime import datetime
 import logging
 from dotenv import load_dotenv
 from pathlib import Path
@@ -54,6 +55,13 @@ def build_and_persist_index(md_dir: Path, index_out_dir: Path) -> Path:
     index_out_dir = Path(index_out_dir).resolve()
     index_out_dir.mkdir(parents=True, exist_ok=True)
 
+    # Check for marker file to skip repeated work if index already built
+    index_id = f"{md_dir.stem}_index"
+    marker_file = index_out_dir / f"{index_id}.ingested"
+    if marker_file.exists():
+        logger.info("Index marker %s found — skipping index build/persist", marker_file)
+        return index_out_dir
+
     logger.info("Loading documents from markdown directory %s", md_dir)
     documents = SimpleDirectoryReader(str(md_dir)).load_data()
 
@@ -87,10 +95,18 @@ def build_and_persist_index(md_dir: Path, index_out_dir: Path) -> Path:
     index.storage_context.persist(persist_dir=str(index_out_dir))
     logger.info("Index persisted to %s using storage_context.persist", index_out_dir)
 
+    # write marker to signal successful ingestion
+    marker_contents = f"Ingested: {datetime.utcnow().isoformat()}Z\n"
+    try:
+        marker_file.write_text(marker_contents, encoding="utf-8")
+        logger.info("Wrote index marker %s", marker_file)
+    except Exception:
+        logger.exception("Failed to write index marker %s", marker_file)
+
     return index_out_dir
 
 
-def main(
+def run(
     pdf_path: Optional[Path] = None,
     *,
     data_dir: Optional[Path] = None,
@@ -126,7 +142,3 @@ def main(
     # build_and_persist_index now expects a directory containing markdown files
     md_dir = md_file.parent
     build_and_persist_index(md_dir, processed_dir)
-
-
-if __name__ == "__main__":
-    main()
