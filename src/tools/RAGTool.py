@@ -1,3 +1,4 @@
+from dotenv import load_dotenv
 from langchain_core.tools import tool
 from llama_index.core import StorageContext, load_index_from_storage, get_response_synthesizer
 from llama_index.core.query_engine import RetrieverQueryEngine
@@ -5,6 +6,9 @@ from llama_index.core.query_engine import RetrieverQueryEngine
 from llama_index.core.retrievers import VectorIndexRetriever
 
 from config import PROCESSED_DATA_DIR
+
+
+load_dotenv()
 
 
 def load_tool():
@@ -17,7 +21,7 @@ def load_tool():
 INDEX = load_tool()
 
 
-@tool
+# @tool
 def rag_tool(question: str, top_k: int = 5, include_sources: bool = False) -> str:
     """
     Query a vector index retriever and return a text answer, optionally including source excerpts.
