@@ -1,4 +1,4 @@
-from src.parser.ingestion import build_and_persist_index
+from sg_trade_ragbot.parser.ingestion import build_and_persist_index, pdf_to_markdown
 from llama_index.core import StorageContext, load_index_from_storage, VectorStoreIndex
 
 
@@ -38,7 +38,6 @@ def test_pdf_to_markdown_skips_when_marker_present(tmp_path):
     Ensure pdf_to_markdown skips converting when a marker file exists and the
     markdown file is present. Verify skip by asserting marker/md mtimes are unchanged.
     """
-    from src.parser import ingestion
 
     out_dir = tmp_path / "intermediate"
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -59,7 +58,7 @@ def test_pdf_to_markdown_skips_when_marker_present(tmp_path):
     marker_mtime_before = marker_file.stat().st_mtime
 
     # call the function under test
-    result = ingestion.pdf_to_markdown(pdf_path, out_dir)
+    result = pdf_to_markdown(pdf_path, out_dir)
 
     # assertions: should return the existing markdown path and marker should still exist
     assert result == md_path
@@ -77,7 +76,6 @@ def test_build_and_persist_index_skips_when_marker_present(tmp_path):
     marker file exists in the output directory. Verify skip by asserting the
     marker mtime and directory entries are unchanged.
     """
-    from src.parser import ingestion
 
     # prepare a markdown directory with one markdown file
     md_dir = tmp_path / "mds"
@@ -98,7 +96,7 @@ def test_build_and_persist_index_skips_when_marker_present(tmp_path):
     marker_mtime_before = marker_file.stat().st_mtime
 
     # call the function under test
-    result = ingestion.build_and_persist_index(md_dir, processed_dir)
+    result = build_and_persist_index(md_dir, processed_dir)
 
     # assertions: function should return the processed_dir and should not have
     # modified the marker or created new files

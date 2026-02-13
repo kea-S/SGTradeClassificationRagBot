@@ -1,8 +1,8 @@
 from llama_index.core.agent.workflow import FunctionAgent
 
-from src.tools.RAGTool import rag_tool
-from src.utils.models.models import get_remote_llm, get_local_llm, LLAMAINDEX
-from src.utils.prompts.prompts import NAIVE_AGENT_PROMPT
+from sg_trade_ragbot.tools.RAGTool import rag_tool
+from sg_trade_ragbot.utils.models.models import get_remote_llm, get_local_llm, LLAMAINDEX
+from sg_trade_ragbot.utils.prompts.prompts import NAIVE_AGENT_PROMPT
 
 
 def get_naive_agent(model_name: str, local: bool = True):

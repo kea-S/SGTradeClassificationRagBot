@@ -1,14 +1,14 @@
 import pytest
 
-from src.utils.models.models import LANGCHAIN, LLAMAINDEX
-from src.utils.models.models import (
+from sg_trade_ragbot.utils.models.models import LANGCHAIN, LLAMAINDEX
+from sg_trade_ragbot.utils.models.models import (
     REMOTE_QWEN,
     REMOTE_LLAMA3,
     REMOTE_OPENAI,
     LOCAL_LLAMA3,
 )
 
-from src.utils.models.models import get_remote_llm, get_local_llm
+from sg_trade_ragbot.utils.models.models import get_remote_llm, get_local_llm
 
 from dotenv import load_dotenv
 

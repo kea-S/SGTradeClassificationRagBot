@@ -2,9 +2,9 @@ import pytest
 
 from dotenv import load_dotenv
 
-from src.agents.naive_agent import get_naive_agent
-from src.utils.models.models import REMOTE_LLAMA3
-from src.tools.RAGTool import rag_tool
+from sg_trade_ragbot.agents.naive_agent import get_naive_agent
+from sg_trade_ragbot.utils.models.models import REMOTE_LLAMA3
+from sg_trade_ragbot.tools.RAGTool import rag_tool
 from llama_index.core.agent.workflow import FunctionAgent
 
 load_dotenv()

@@ -1,0 +1,31 @@
+prompts:
+  - "{{description}}"
+
+providers:
+  - id: python:../evaluator.py
+    label: 'Agent: GPT-4o'
+    config:
+      model_name: 'gpt-4o'
+      local: false
+
+  - id: python:../evaluator.py
+    label: 'Agent: Llama3.3 70b remote'
+    config:
+      model_name: 'llama-3.3-70b-versatile'
+      local: false
+
+  - id: python:../evaluator.py
+    label: 'Agent: qwen3 32b remote'
+    config:
+      model_name: 'qwen/qwen3-32b'
+      local: false
+
+  - id: python:../evaluator.py
+    label: 'Agent: llama3.1 8b local'
+    config:
+      model_name: 'llama3.1:latest'
+      local: true
+
+tests:
+  - vars:
+      description: "Live sheep, pure-bred and breeding"

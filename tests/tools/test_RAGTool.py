@@ -33,7 +33,7 @@ def test_rag_tool_with_real_index():
     a non-empty, non-error string.
     """
     # Import the module inside the test so the collection-time skip can prevent import failures
-    RAGTool = importlib.import_module("src.tools.RAGTool")
+    RAGTool = importlib.import_module("sg_trade_ragbot.tools.RAGTool")
 
     question = "Provide a short summary of the indexed documents."
     # choose a sensible default top_k
