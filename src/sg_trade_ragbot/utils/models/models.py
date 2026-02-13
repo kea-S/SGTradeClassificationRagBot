@@ -34,6 +34,10 @@ def get_remote_llm(name: str, framework: str):
         return ChatGroq(model=name)
 
 
+# llama-3.1-8b is not "good enough" at the current state,
+# might be that
+# 1. Chunks are too big
+# 2. Too many similarity searches
 def get_local_llm(name: str, framework: str):
     if framework == LANGCHAIN:
         return ChatOllama(
@@ -42,6 +46,5 @@ def get_local_llm(name: str, framework: str):
     if framework == LLAMAINDEX:
         return Ollama(
             model=name,
-            request_timeout=120.0,
-            context_window=8000
+            request_timeout=60000,
         )
