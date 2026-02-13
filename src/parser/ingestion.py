@@ -31,12 +31,32 @@ def pdf_to_markdown(pdf_path: Path, out_dir: Path) -> Path:
     if not pdf_path.exists():
         raise FileNotFoundError(f"PDF not found: {pdf_path}")
 
+    md_path = out_dir / f"{pdf_path.stem}.md"
+
+    # Check for marker file to skip repeated work if index already built
+    md_id = f"{out_dir.stem}_md"
+    marker_file = out_dir / f"{md_id}.ingested"
+    if marker_file.exists():
+        if md_path.exists():
+            logger.info("Markdown marker %s found — skipping PDF -> markdown conversion", marker_file)
+
+            return md_path
+        else:
+            logger.warning("Marker %s found but markdown %s missing; regenerating", marker_file, md_path)
+
     logger.info("Converting PDF %s -> markdown", pdf_path)
     md_text = to_markdown(str(pdf_path))
 
-    md_path = out_dir / f"{pdf_path.stem}.md"
     md_path.write_text(md_text, encoding="utf-8")
     logger.info("Wrote markdown to %s", md_path)
+
+    marker_contents = f"Ingested: {datetime.utcnow().isoformat()}Z\nSource: {pdf_path}\n"
+    try:
+        marker_file.write_text(marker_contents, encoding="utf-8")
+        logger.info("Wrote markdown marker %s", marker_file)
+    except Exception:
+        logger.exception("Failed to write markdown marker %s", marker_file)
+
     return md_path
 
 

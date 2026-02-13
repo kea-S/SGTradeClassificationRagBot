@@ -33,33 +33,77 @@ def test_build_and_persist_index_success(tmp_path):
     assert isinstance(loaded, VectorStoreIndex)
 
 
+def test_pdf_to_markdown_skips_when_marker_present(tmp_path):
+    """
+    Ensure pdf_to_markdown skips converting when a marker file exists and the
+    markdown file is present. Verify skip by asserting marker/md mtimes are unchanged.
+    """
+    from src.parser import ingestion
+
+    out_dir = tmp_path / "intermediate"
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    # create a dummy PDF file
+    pdf_path = tmp_path / "sample.pdf"
+    pdf_path.write_bytes(b"%PDF-1.4\n%fake-pdf\n")
+
+    # create the expected markdown file and marker file before calling
+    md_path = out_dir / f"{pdf_path.stem}.md"
+    md_path.write_text("previously converted markdown", encoding="utf-8")
+
+    marker_file = out_dir / f"{out_dir.stem}_md.ingested"
+    marker_file.write_text("Ingested: test\n", encoding="utf-8")
+
+    # record mtimes before the call
+    md_mtime_before = md_path.stat().st_mtime
+    marker_mtime_before = marker_file.stat().st_mtime
+
+    # call the function under test
+    result = ingestion.pdf_to_markdown(pdf_path, out_dir)
+
+    # assertions: should return the existing markdown path and marker should still exist
+    assert result == md_path
+    assert result.exists()
+    assert marker_file.exists()
+
+    # ensure files were not modified (skip-path)
+    assert md_path.stat().st_mtime == md_mtime_before
+    assert marker_file.stat().st_mtime == marker_mtime_before
+
+
 def test_build_and_persist_index_skips_when_marker_present(tmp_path):
     """
-    If the index marker file exists in the output directory, the function should
-    skip building/persisting and return early without creating new files.
+    Ensure build_and_persist_index skips building/persisting the index when a
+    marker file exists in the output directory. Verify skip by asserting the
+    marker mtime and directory entries are unchanged.
     """
-    md_dir = tmp_path / "stcced2022"
-    md_dir.mkdir()
-    md_file = md_dir / "stcced2022.md"
-    md_file.write_text("# Example\ncontent", encoding="utf-8")
+    from src.parser import ingestion
 
+    # prepare a markdown directory with one markdown file
+    md_dir = tmp_path / "mds"
+    md_dir.mkdir(parents=True, exist_ok=True)
+    md_file = md_dir / "doc.md"
+    md_file.write_text("# title\n\ncontent", encoding="utf-8")
+
+    # prepare the processed/index output dir and pre-create the marker file
     processed_dir = tmp_path / "processed"
-    processed_dir.mkdir(parents=True)
+    processed_dir.mkdir(parents=True, exist_ok=True)
 
     index_id = f"{md_dir.stem}_index"
-    marker = processed_dir / f"{index_id}.ingested"
-    marker.write_text("Ingested: 2026-01-01T00:00:00Z\n", encoding="utf-8")
+    marker_file = processed_dir / f"{index_id}.ingested"
+    marker_file.write_text("Ingested: test\n", encoding="utf-8")
 
-    before = sorted([p.name for p in processed_dir.iterdir()])
+    # snapshot directory listing and marker mtime before running
+    entries_before = sorted(p.name for p in processed_dir.iterdir())
+    marker_mtime_before = marker_file.stat().st_mtime
 
-    returned = build_and_persist_index(md_dir, processed_dir)
+    # call the function under test
+    result = ingestion.build_and_persist_index(md_dir, processed_dir)
 
-    assert returned == processed_dir
-
-    after = sorted([p.name for p in processed_dir.iterdir()])
-    # No new files should have been created when marker exists
-    assert after == before
-
-    # marker still exists and contains our sentinel
-    assert marker.exists()
-    assert "Ingested" in marker.read_text()
+    # assertions: function should return the processed_dir and should not have
+    # modified the marker or created new files
+    assert result == processed_dir
+    assert marker_file.exists()
+    assert marker_file.stat().st_mtime == marker_mtime_before
+    entries_after = sorted(p.name for p in processed_dir.iterdir())
+    assert entries_after == entries_before
