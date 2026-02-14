@@ -18,5 +18,6 @@ Query: "Electric vehicle charging station with integrated advertising LED displa
 Ambiguity: (Should the HS code belong to Electric vehicle charging stations or
 LED displays?)
 
+You will be provided by a query like the above.
 Return the most probable HS codes, and their headings.
 """

@@ -20,6 +20,8 @@ REMOTE_LLAMA3 = "llama-3.3-70b-versatile"
 REMOTE_QWEN = "qwen/qwen3-32b"   # mixtral is deprecated
 REMOTE_OPENAI = "gpt-4o"
 
+REMOTE_JUDGE = "gpt-5"
+
 LOCAL_LLAMA3 = "llama3.1:latest"
 
 
@@ -46,5 +48,5 @@ def get_local_llm(name: str, framework: str):
     if framework == LLAMAINDEX:
         return Ollama(
             model=name,
-            request_timeout=60000,
+            request_timeout=30
         )

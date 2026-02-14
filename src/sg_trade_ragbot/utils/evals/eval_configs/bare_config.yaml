@@ -1,20 +1,20 @@
 prompts:
-  - "{{description}}"
+  - "{{query}}"
 
 providers:
-  - id: python:../evaluator.py
+  - id: python:../provider.py
     label: 'Agent: GPT-4o'
     config:
       model_name: 'gpt-4o'
       local: false
 
-  - id: python:../evaluator.py
+  - id: python:../provider.py
     label: 'Agent: Llama3.3 70b remote'
     config:
       model_name: 'llama-3.3-70b-versatile'
       local: false
 
-  - id: python:../evaluator.py
+  - id: python:../provider.py
     label: 'Agent: qwen3 32b remote'
     config:
       model_name: 'qwen/qwen3-32b'
@@ -28,4 +28,7 @@ providers:
 
 tests:
   - vars:
-      description: "Live sheep, pure-bred and breeding"
+      id: example-001
+      description: "Simple test case"
+      query: "Live sheep, pure-bred and breeding"
+      ground_truth: "0104.10.10"

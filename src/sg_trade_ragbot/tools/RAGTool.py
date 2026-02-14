@@ -12,17 +12,18 @@ from config import PROCESSED_DATA_DIR
 load_dotenv()
 
 
-def load_tool():
+def load_index():
     storage_context = StorageContext.from_defaults(persist_dir=str(PROCESSED_DATA_DIR))
     index = load_index_from_storage(storage_context)
 
     return index
 
 
-INDEX = load_tool()
+INDEX = load_index()
 
 
 # @tool
+# Chunking is an issue. I suspect that chunks are too large for the smaller models
 def rag_tool(question: str, top_k: int = 5) -> str:
     """
     Query the persisted LlamaIndex and return a JSON-encoded response string.
