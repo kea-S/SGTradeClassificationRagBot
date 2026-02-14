@@ -48,5 +48,5 @@ def get_local_llm(name: str, framework: str):
     if framework == LLAMAINDEX:
         return Ollama(
             model=name,
-            request_timeout=30
+            request_timeout=60.0
         )
