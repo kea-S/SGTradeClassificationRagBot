@@ -1,83 +1,94 @@
-# SGTradeClassificationRagBot
+# **SGTradeClassificationRagBot**
 
-A small research / prototype repository implementing a retrieval-augmented generation (RAG) workflow for classifying Singapore trade-related documents. The project contains a lightweight RAG tool, a simple "naive" classification agent, prompt & model utilities, and a focus evaluation utilities to measure classifier performance.
+A research prototype implementing a retrieval-augmented generation (RAG) workflow for classifying Singapore trade-related documents. The project contains a lightweight RAG tool, a simple "naive" classification agent, prompt & model utilities, and focused evaluation utilities to measure classifier performance.
 
-This README provides a quick overview, installation and test instructions, usage examples, and notes for development.
+## **Key Features**
 
-## Contents / Project structure (important files)
-- `src/sg_trade_ragbot/agents/naive_agent.py` — a simple classification agent used as a baseline.
-- `src/sg_trade_ragbot/tools/RAGTool.py` — RAG tooling: document ingestion / retrieval + context assembly for LLM prompting.
-- `src/sg_trade_ragbot/utils/prompts/prompts.py` — prompt templates used by agents and tools.
-- `src/sg_trade_ragbot/utils/models/models.py` — model wrappers / helpers.
-- `src/sg_trade_ragbot/utils/evals/` — evaluation configuration and evaluator utilities (includes `bare_config.yaml`).
-- `tests/` — unit tests for agents, tools, and utils.
+1. **Modular Architecture:** A production-ready Python codebase with clear separation of concerns (Agents, Tools, Parsers, Evaluation).  
+2. **Containerized Workflow:** A fully working Dockerfile and docker-compose setup for reproducible testing.  
+3. **Evaluation-First:** Integrated promptfoo configuration for rigorous testing of prompts against trade scenarios.  
+4. **Auditor’s Log:** A trace of the agent’s Chain of Thought (CoT) for the test cases, showing how it handled ambiguity.
 
-## Goals
-- Provide a reproducible RAG pipeline for classifying trade text.
-- Offer simple baseline agents and utilities to evaluate different retrieval / prompt strategies.
-- Easy to iterate: change prompts, plug in different llms
+## **Project Structure**
 
-## Requirements
-- Python 3.13+
+* src/sg\_trade\_ragbot/agents/naive\_agent.py — A simple classification agent used as a baseline.  
+* src/sg\_trade\_ragbot/tools/RAGTool.py — RAG tooling: document ingestion, retrieval, and context assembly.  
+* src/sg\_trade\_ragbot/utils/prompts/prompts.py — Prompt templates used by agents and tools.  
+* src/sg\_trade\_ragbot/utils/models/models.py — Model wrappers and helpers.  
+* src/sg\_trade\_ragbot/utils/evals/ — Evaluation configuration (e.g., bare\_config.yaml) and utilities.  
+* tests/ — Unit tests for agents, tools, and utils.
 
-## Quick start (macOS)
+## **Goals**
 
-### Evaluation (main entrypoint)
-1. Clone the repository:
-   - git clone <repo-url>
-   - cd SGTradeClassificationRagBot
+* **Reproducible Pipeline:** Provide a containerized RAG pipeline for classifying trade text.  
+* **Baseline Benchmarks:** Offer simple agents to evaluate different retrieval and prompting strategies.  
+* **Iteration:** Make it easy to swap prompts, plug in different LLMs (OpenAI, Groq, etc.), and measure impact.
 
-2. Create and activate a virtual environment:
-   - python3 -m venv .venv
-   - source .venv/bin/activate
+## **Requirements**
 
-3. Install the package in editable mode:
-   - pip install -e .
+* **Docker Desktop** (Recommended)  
+* **uv** (Optional, for local dependency management)  
+* Python 3.13+ (If running locally without Docker)
 
-   If you only want test requirements:
-   - pip install -r requirements-dev.txt
-   (or inspect `pyproject.toml` to install exact deps)
+## **Quick Start (Docker)**
 
-4. Run tests:
-   - pytest -q
+This project is containerized to ensure consistent evaluations across different machines. It uses uv for dependency management and mounts configuration files so you can edit test cases without rebuilding the container.
 
-## Example usage snippets
+### **1\. Setup Configuration**
 
-- Using the RAG tool (conceptual example):
-````python
-# Example: assemble a retriever and query it
-from sg_trade_ragbot.tools.RAGTool import RAGTool
+The container requires API keys to function.
 
-# ...initialize RAGTool with your embedding/retrieval backend and LLM wrapper...
-rag = RAGTool(index_path="path/to/index", llm_client=..., config=...)
+1. Copy the example environment file:  
+   cp .env.example .env
 
-# Ingest documents (if supported)
-# rag.ingest(documents)
+2. Open .env and add your keys (e.g., OPENAI\_API\_KEY, GROQ\_API\_KEY).**Note:** Do not add file paths to .env. The container handles paths automatically.
 
-# Query
-query = "Classify this trade record: <text here>"
-response = rag.answer(query)
-print(response)
-````
+### **2\. Running an Evaluation**
 
-- Using the naive agent (conceptual example):
-````python
-from sg_trade_ragbot.agents.naive_agent import NaiveAgent
+To run the promptfoo evaluation against the default configuration:  
+docker compose up \--build
 
-agent = NaiveAgent()
-text = "Import of electronics from Country X, HS code 85..."
-label = agent.classify(text)
-print("Predicted label:", label)
-````
+This will:
 
-Note: the actual constructors / method names may differ slightly; see the implementation in `src/sg_trade_ragbot/...` for exact signatures. The repository includes unit tests which illustrate expected usage patterns (see `tests/`).
+1. Build the image (installing all dependencies from uv.lock).  
+2. Run the evaluation script.  
+3. Print the results to your terminal.
 
-## Evaluation
-- Configurations for evaluation lives in `src/sg_trade_ragbot/utils/evals/` (e.g. `bare_config.yaml`).
-- Use `Evaluator` in `utils.evals.evaluator` to run benchmarks / collect metrics.
+### **3\. The "Live Edit" Workflow**
 
-## Development notes
-- Prompt templates are in `utils/prompts` — tweak these to change agent behavior.
-- Models wrappers in `utils/models` abstract the LLM/embedding implementations. Swap in your preferred LLM client by implementing the required interface.
-- Tests live in `tests/` and use pytest — run them frequently during development.
+You do **not** need to rebuild the container to modify prompts or test cases.
 
+1. Open src/sg\_trade\_ragbot/utils/evals/eval\_configs/bare\_config.yaml in your local editor.  
+2. Modify your prompts, test cases, or variables.  
+3. Save the file.  
+4. Run docker compose up again.  
+   * *The container sees your changes immediately via Docker volumes.*
+
+### **4\. Managing Dependencies**
+
+If you add a new library (e.g., spacy), you must rebuild the container for Docker to see it:  
+\# 1\. Update lockfile locally  
+uv add spacy
+
+\# 2\. Rebuild container  
+docker compose up \--build
+
+## **Known Issues & Roadmap**
+
+### **The Auditor’s Log (Chain of Thought)**
+
+The system generates a trace of the agent’s Chain of Thought (CoT) to show how it handles ambiguity in trade documents.
+
+* **Current Status:** These traces are currently visible in the promptfoo debug logs/container output.  
+* **Todo:** Implement a structured export or cleaner visualization for the Auditor's Log in the final report.
+
+### **Local Ollama Support**
+
+* **Current Status:** The Docker configuration currently relies on external APIs (OpenAI, Groq). Local Ollama instances running on the host machine are not yet bridgeable to the container network in this release.  
+* **Todo:** Add a dedicated Ollama service to docker-compose.yml for fully offline, local model evaluation.
+
+## **Development Notes**
+
+* **Prompts:** Tweak templates in utils/prompts to change agent behavior.  
+* **Models:** Wrappers in utils/models abstract the LLM/embedding implementations. You can swap in your preferred LLM client by implementing the required interface.  
+* **Testing:** Tests live in tests/ and use pytest. Run them frequently during development.
