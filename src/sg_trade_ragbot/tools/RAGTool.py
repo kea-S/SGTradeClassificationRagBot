@@ -94,6 +94,8 @@ def rag_tool(question: str, top_k: int = 5) -> str:
 
         # Always return JSON so callers can parse structured data.
         payload = {"answer": answer, "retrievals": retrievals}
+
+        # Remember to update this straight to the pydantic class for ease
         return json.dumps(payload)
 
     except Exception as e:

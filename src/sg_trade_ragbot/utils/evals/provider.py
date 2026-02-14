@@ -1,5 +1,6 @@
 from sg_trade_ragbot.agents.naive_agent import get_naive_agent
 from sg_trade_ragbot.parser import ingestion
+from sg_trade_ragbot.utils.pydantic_models.models import RAGToolOutput
 
 
 async def call_api(prompt, options, context):
@@ -15,11 +16,13 @@ async def call_api(prompt, options, context):
 
     agent = get_naive_agent(model_name, local)
 
-    result = await agent.run(prompt)
+    response = await agent.run(prompt)
+
+    structured_response = response.get_pyadantic_model(RAGToolOutput)
 
     return {
-        'output': str(result),
-        'retrievals': str(result),
-        'ground_truth': str(ground_truth),
-        'metadata': str(ground_truth),
+        'output': structured_response.answer,
+        'retrievals': structured_response.retrievals,
+        'ground_truth': ground_truth,
+        'metadata': f"{'local' if local else 'remote'}-{model_name}"
     }
