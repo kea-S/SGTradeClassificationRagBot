@@ -1,0 +1,18 @@
+services:
+  ragbot-eval:
+    build: .
+    container_name: sg_trade_ragbot_eval
+    
+    env_file:
+      - .env
+
+    environment:
+      - PROMPTFOO_CACHE_ENABLED=false
+      - PYTHONUNBUFFERED=1
+
+    volumes:
+      - ./data:/app/data
+      
+      - ./src/sg_trade_ragbot/utils/evals/eval_configs:/app/src/sg_trade_ragbot/utils/evals/eval_configs
+      
+      - ./promptfoo-output:/app/promptfoo-output

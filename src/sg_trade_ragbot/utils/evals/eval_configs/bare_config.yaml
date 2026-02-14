@@ -20,7 +20,7 @@ providers:
       model_name: 'qwen/qwen3-32b'
       local: false
 
-  - id: python:../evaluator.py
+  - id: python:../provider.py
     label: 'Agent: llama3.1 8b local'
     config:
       model_name: 'llama3.1:latest'
