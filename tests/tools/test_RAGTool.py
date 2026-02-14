@@ -1,3 +1,4 @@
+import json
 from dotenv import load_dotenv
 from pathlib import Path
 import importlib
@@ -29,16 +30,33 @@ def test_rag_tool_with_real_index():
     config.PROCESSED_DATA_DIR.
 
     This imports the real RAGTool module (which loads the persisted index at import time)
-    and calls the tool with a simple question. We only assert that the tool returns
-    a non-empty, non-error string.
+    and calls the tool with a simple question. The tool now returns a JSON string
+    with the shape: {"answer": <str>, "retrievals": <list>}. The test verifies the
+    returned value is valid JSON, contains the expected keys, that the answer is a
+    non-empty string and not an error message, and that at least one retrieval is present.
+
     """
     # Import the module inside the test so the collection-time skip can prevent import failures
     RAGTool = importlib.import_module("sg_trade_ragbot.tools.RAGTool")
 
-    question = "Provide a short summary of the indexed documents."
+    question = "Provide the title of the index documents."
     # choose a sensible default top_k
-    result = _call_tool_unwrapped(RAGTool.rag_tool, question, 5)
+    json_str = _call_tool_unwrapped(RAGTool.rag_tool, question, 5)
 
-    assert isinstance(result, str)
-    assert result.strip() != "", "rag_tool returned empty string"
-    assert not result.startswith("RAG tool error:"), f"rag_tool returned error: {result}"
+    try:
+        payload = json.loads(json_str)
+    except Exception:
+        pytest.fail(f"rag_tool did not return valid JSON: {json_str!r}")
+
+    assert isinstance(payload, dict)
+    assert "answer" in payload and "retrievals" in payload
+
+    answer = payload["answer"]
+    retrievals = payload["retrievals"]
+
+    assert isinstance(answer, str)
+    assert answer.strip() != "", "rag_tool returned empty answer"
+    assert not answer.startswith("RAG tool error:"), f"rag_tool returned error: {answer!s}"
+
+    assert isinstance(retrievals, list)
+    assert len(retrievals) != 0
