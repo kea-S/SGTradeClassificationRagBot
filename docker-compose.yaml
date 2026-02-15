@@ -12,7 +12,5 @@ services:
 
     volumes:
       - ./data:/app/data
-      
       - ./src/sg_trade_ragbot/utils/evals/eval_configs:/app/src/sg_trade_ragbot/utils/evals/eval_configs
-      
-      - ./promptfoo-output:/app/promptfoo-output
+      - ./promptfoo-output:/root/.promptfoo/logs
