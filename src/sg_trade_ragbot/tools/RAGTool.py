@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 from dotenv import load_dotenv
 from langchain_core.tools import tool
 from llama_index.core import StorageContext, load_index_from_storage, get_response_synthesizer
@@ -12,14 +13,23 @@ from config import PROCESSED_DATA_DIR
 load_dotenv()
 
 
-def load_index():
-    storage_context = StorageContext.from_defaults(persist_dir=str(PROCESSED_DATA_DIR))
-    index = load_index_from_storage(storage_context)
-
-    return index
+_INDEX = None
 
 
-INDEX = load_index()
+def _load_index():
+    """
+    Load the persisted index from disk. Ensure the processed directory exists.
+    """
+    global _INDEX
+
+    if _INDEX is None:
+        Path(PROCESSED_DATA_DIR).mkdir(parents=True, exist_ok=True)
+        storage_context = StorageContext.from_defaults(persist_dir=str(PROCESSED_DATA_DIR))
+        index = load_index_from_storage(storage_context)
+
+        _INDEX = index
+
+    return _INDEX
 
 
 # @tool
@@ -54,7 +64,8 @@ def rag_tool(question: str, top_k: int = 5) -> str:
     """
 
     try:
-        retriever = VectorIndexRetriever(index=INDEX, similarity_top_k=top_k)
+        index = _load_index()
+        retriever = VectorIndexRetriever(index=index, similarity_top_k=top_k)
 
         response_synthesizer = get_response_synthesizer(response_mode="tree_summarize")
 
