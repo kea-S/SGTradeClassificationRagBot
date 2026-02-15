@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 from dotenv import load_dotenv
 from langchain_core.tools import tool
 from llama_index.core import StorageContext, load_index_from_storage, get_response_synthesizer
@@ -11,18 +12,27 @@ from config import PROCESSED_DATA_DIR
 
 load_dotenv()
 
-
-def load_tool():
-    storage_context = StorageContext.from_defaults(persist_dir=str(PROCESSED_DATA_DIR))
-    index = load_index_from_storage(storage_context)
-
-    return index
+_INDEX = None
 
 
-INDEX = load_tool()
+def _load_index():
+    """
+    Load the persisted index from disk. Ensure the processed directory exists.
+    """
+    global _INDEX
+
+    if _INDEX is None:
+        Path(PROCESSED_DATA_DIR).mkdir(parents=True, exist_ok=True)
+        storage_context = StorageContext.from_defaults(persist_dir=str(PROCESSED_DATA_DIR))
+        index = load_index_from_storage(storage_context)
+
+        _INDEX = index
+
+    return _INDEX
 
 
 # @tool
+# Chunking is an issue. I suspect that chunks are too large for the smaller models
 def rag_tool(question: str, top_k: int = 5) -> str:
     """
     Query the persisted LlamaIndex and return a JSON-encoded response string.
@@ -53,7 +63,8 @@ def rag_tool(question: str, top_k: int = 5) -> str:
     """
 
     try:
-        retriever = VectorIndexRetriever(index=INDEX, similarity_top_k=top_k)
+        index = _load_index()
+        retriever = VectorIndexRetriever(index=index, similarity_top_k=top_k)
 
         response_synthesizer = get_response_synthesizer(response_mode="tree_summarize")
 
@@ -94,6 +105,8 @@ def rag_tool(question: str, top_k: int = 5) -> str:
 
         # Always return JSON so callers can parse structured data.
         payload = {"answer": answer, "retrievals": retrievals}
+
+        # Remember to update this straight to the pydantic class for ease
         return json.dumps(payload)
 
     except Exception as e:
