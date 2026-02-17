@@ -110,7 +110,7 @@ def test_rag_tool_with_real_index():
 
     question = "Provide the title of the index documents."
     # choose a sensible default top_k
-    payload = _call_tool_unwrapped(RAGTool.rag_tool, question, 3)
+    payload = _call_tool_unwrapped(RAGTool._rag_tool_helper, question, 3)
 
     assert isinstance(payload, RAGToolOutput)
     assert hasattr(payload, "answer") and hasattr(payload, "retrievals")

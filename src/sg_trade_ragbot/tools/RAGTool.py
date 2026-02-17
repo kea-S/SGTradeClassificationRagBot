@@ -32,9 +32,8 @@ def _load_index():
     return _INDEX
 
 
-# @tool
 # Chunking is an issue. I suspect that chunks are too large for the smaller models
-def rag_tool(question: str, top_k: int = 5) -> RAGToolOutput:
+def _rag_tool_helper(question: str, top_k: int = 3) -> RAGToolOutput:
     """
     Query the persisted LlamaIndex and return a JSON-encoded response string.
 
@@ -45,6 +44,11 @@ def rag_tool(question: str, top_k: int = 5) -> RAGToolOutput:
       - On error the function raises a RAGToolError
     """
     try:
+        # for now limit 3 since chunks reach more tokens than accepted
+        # in llama? But honestly it shouldn't really be reaching this
+        if top_k > 3:
+            top_k = 3
+
         index = _load_index()
         retriever = VectorIndexRetriever(index=index, similarity_top_k=top_k)
 
@@ -93,3 +97,17 @@ def rag_tool(question: str, top_k: int = 5) -> RAGToolOutput:
 
     except Exception as e:
         raise RAGToolError(str(e)) from e
+
+
+# @tool
+def rag_tool(question: str, top_k: int = 5) -> str:
+    """
+    Agent-facing wrapper: returns JSON string on success or the legacy
+    "RAG tool error: ..." string on failure.
+    """
+    try:
+        output = _rag_tool_helper(question, top_k=top_k)
+
+        return output.model_dump_json()
+    except RAGToolError as e:
+        return f"RAG tool error: {e}"
