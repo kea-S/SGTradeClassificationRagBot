@@ -18,6 +18,8 @@ LLAMAINDEX = "llama_index"
 # models to be experimented with
 REMOTE_LLAMA3 = "llama-3.3-70b-versatile"
 REMOTE_QWEN = "qwen/qwen3-32b"   # mixtral is deprecated
+REMOTE_GPT_OSS_SMALL = "openai/gpt-oss-20b"
+REMOTE_GPT_OSS_LARGE = "openai/gpt-oss-120b"
 REMOTE_OPENAI = "gpt-4o"
 
 REMOTE_JUDGE = "gpt-5"

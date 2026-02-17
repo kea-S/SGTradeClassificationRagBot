@@ -98,32 +98,32 @@ def _rag_tool_helper(question: str, top_k: int = 3) -> RAGToolOutput:
             node = getattr(sn, "node", sn)
 
             # Prefer get_content(), then get_text(), then node.text attribute, then str(node)
-            content = None
+            text = None
             if hasattr(node, "get_content"):
                 try:
-                    content = node.get_content()
+                    text = node.get_content()
                 except Exception:
-                    content = None
+                    text = None
 
-            if not content and hasattr(node, "get_text"):
+            if not text and hasattr(node, "get_text"):
                 try:
-                    content = node.get_text()
+                    text = node.get_text()
                 except Exception:
-                    content = None
+                    text = None
 
-            if not content:
-                content = getattr(node, "text", None) or str(node)
+            if not text:
+                text = getattr(node, "text", None) or str(node)
 
             node_id = (getattr(node, "id", None) or
                        getattr(node, "id_", None) or
                        getattr(node, "doc_id", None) or
                        "")
             try:
-                item = RetrievalItem(id=str(node_id), content=str(content))
+                item = RetrievalItem(id=str(node_id), text=str(text))
                 retrievals.append(item)
             except Exception as e:
                 # Build helpful debug message (truncate long text/repr)
-                snippet = (str(content)[:200] + "...") if content and len(str(content)) > 200 else str(content)
+                snippet = (str(text)[:200] + "...") if text and len(str(text)) > 200 else str(text)
                 node_repr = repr(node)
                 node_repr_snip = node_repr[:200] + "..." if len(node_repr) > 200 else node_repr
                 msg = (

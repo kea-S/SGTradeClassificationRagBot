@@ -16,8 +16,7 @@ def get_naive_agent(model_name: str, local: bool = True):
         tools=[rag_tool],
         llm=llm,
         system_prompt=NAIVE_AGENT_PROMPT,
-        output_cls=RAGToolOutput,
-        verbose=True,
+        is_function_calling_model=True,
     )
 
     return naive_agent

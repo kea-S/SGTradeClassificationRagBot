@@ -4,7 +4,7 @@ from pydantic import BaseModel, Field
 
 class RetrievalItem(BaseModel):
     id: str = Field(..., description="Node or document id for the retrieval")
-    content: str = Field(..., description="Source excerpt or full content for the retrieval")
+    text: str = Field(..., description="Source excerpt or full content for the retrieval")
 
 
 class RAGToolOutput(BaseModel):
