@@ -17,3 +17,8 @@ class RAGToolOutput(BaseModel):
             raise ValueError(raw)
 
         return cls.model_validate_json(raw)
+
+
+class RAGToolError(Exception):
+    """Raised for errors inside the RAG tool (internal API)."""
+    pass

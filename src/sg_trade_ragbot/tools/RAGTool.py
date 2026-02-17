@@ -1,4 +1,3 @@
-import json
 from pathlib import Path
 from dotenv import load_dotenv
 from langchain_core.tools import tool
@@ -8,6 +7,7 @@ from llama_index.core.query_engine import RetrieverQueryEngine
 from llama_index.core.retrievers import VectorIndexRetriever
 
 from config import PROCESSED_DATA_DIR
+from sg_trade_ragbot.utils.pydantic_models.models import RAGToolOutput, RetrievalItem, RAGToolError
 
 
 load_dotenv()
@@ -34,35 +34,16 @@ def _load_index():
 
 # @tool
 # Chunking is an issue. I suspect that chunks are too large for the smaller models
-def rag_tool(question: str, top_k: int = 5) -> str:
+def rag_tool(question: str, top_k: int = 5) -> RAGToolOutput:
     """
     Query the persisted LlamaIndex and return a JSON-encoded response string.
 
     Successful return value:
-      - A JSON string with the shape:
-        {
-          "answer": "<textual answer from the index/query engine>",
-          "retrievals": [
-            {"id": "<node id or doc id>", "text": "<source excerpt or full text>"},
-            ...
-          ]
-        }
+      - The RAGToolOutput pydantic model.
 
     Failure behavior:
-      - On error the function returns a plain (non-JSON) string beginning with
-        "RAG tool error: " followed by the exception message.
-
-    Parameters:
-      question (str): Natural-language question to ask the retrieval-augmented generator.
-      top_k (int): Maximum number of similar index entries to retrieve (passed to VectorIndexRetriever).
-
-    Returns:
-      str: JSON-encoded payload on success, or an error string on failure.
-
-    Example:
-      rag_tool("Provide the title of the index documents.", top_k=5)
+      - On error the function raises a RAGToolError
     """
-
     try:
         index = _load_index()
         retriever = VectorIndexRetriever(index=index, similarity_top_k=top_k)
@@ -77,7 +58,7 @@ def rag_tool(question: str, top_k: int = 5) -> str:
         answer = str(response)
 
         retrievals = []
-        # primary path for 0.14.x: source_nodes -> node.get_text()
+
         if hasattr(response, "source_nodes") and getattr(response, "source_nodes"):
             try:
                 for sn in response.source_nodes:
@@ -92,23 +73,23 @@ def rag_tool(question: str, top_k: int = 5) -> str:
             except Exception:
                 retrievals = []
 
-        # simple fallback: formatted sources (display-oriented)
-        if not retrievals and hasattr(response, "get_formatted_sources"):
+        # Validate and convert to pydantic RetrievalItem objects
+        validated_retrievals = []
+        for r in retrievals:
             try:
-                formatted = response.get_formatted_sources()
-                if isinstance(formatted, (list, tuple)):
-                    for i, s in enumerate(formatted):
-                        retrievals.append({"id": f"formatted-{i}", "text": str(s)})
-                elif formatted:
-                    retrievals.append({"id": "formatted", "text": str(formatted)})
+                # Ensure id/text are strings (pydantic will validate types)
+                rid = "" if r.get("id") is None else str(r.get("id"))
+                rtext = "" if r.get("text") is None else str(r.get("text"))
+                item = RetrievalItem(id=rid, text=rtext)
+                validated_retrievals.append(item)
             except Exception:
-                pass
+                # Skip invalid retrieval entries
+                continue
 
-        # Always return JSON so callers can parse structured data.
-        payload = {"answer": answer, "retrievals": retrievals}
+        # Build the pydantic output model and return JSON
+        output = RAGToolOutput(answer=answer, retrievals=validated_retrievals)
 
-        # Remember to update this straight to the pydantic class for ease
-        return json.dumps(payload)
+        return output
 
     except Exception as e:
-        return f"RAG tool error: {e}"
+        raise RAGToolError(str(e)) from e

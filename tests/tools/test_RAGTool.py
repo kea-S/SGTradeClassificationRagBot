@@ -4,6 +4,9 @@ from pathlib import Path
 import importlib
 import pytest
 import config
+from typing import List
+
+from sg_trade_ragbot.utils.pydantic_models.models import RAGToolOutput, RetrievalItem
 
 load_dotenv()
 
@@ -107,22 +110,20 @@ def test_rag_tool_with_real_index():
 
     question = "Provide the title of the index documents."
     # choose a sensible default top_k
-    json_str = _call_tool_unwrapped(RAGTool.rag_tool, question, 5)
+    payload = _call_tool_unwrapped(RAGTool.rag_tool, question, 3)
 
-    try:
-        payload = json.loads(json_str)
-    except Exception:
-        pytest.fail(f"rag_tool did not return valid JSON: {json_str!r}")
+    assert isinstance(payload, RAGToolOutput)
+    assert hasattr(payload, "answer") and hasattr(payload, "retrievals")
 
-    assert isinstance(payload, dict)
-    assert "answer" in payload and "retrievals" in payload
-
-    answer = payload["answer"]
-    retrievals = payload["retrievals"]
+    answer = payload.answer
+    retrievals = payload.retrievals
 
     assert isinstance(answer, str)
+
     assert answer.strip() != "", "rag_tool returned empty answer"
     assert not answer.startswith("RAG tool error:"), f"rag_tool returned error: {answer!s}"
 
-    assert isinstance(retrievals, list)
-    assert len(retrievals) != 0
+    assert isinstance(retrievals, List)
+
+    for retrieval in retrievals:
+        assert isinstance(retrieval, RetrievalItem)
