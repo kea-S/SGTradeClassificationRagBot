@@ -4,7 +4,7 @@ from pydantic import BaseModel, Field
 
 class RetrievalItem(BaseModel):
     id: str = Field(..., description="Node or document id for the retrieval")
-    text: str = Field(..., description="Source excerpt or full text for the retrieval")
+    content: str = Field(..., description="Source excerpt or full content for the retrieval")
 
 
 class RAGToolOutput(BaseModel):
@@ -21,4 +21,9 @@ class RAGToolOutput(BaseModel):
 
 class RAGToolError(Exception):
     """Raised for errors inside the RAG tool (internal API)."""
+    pass
+
+
+class RetrievalValidationError(Exception):
+    """Raised when a retrieved node cannot be converted into a valid RetrievalItem."""
     pass

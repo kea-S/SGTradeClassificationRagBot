@@ -7,11 +7,15 @@ from llama_index.core.query_engine import RetrieverQueryEngine
 from llama_index.core.retrievers import VectorIndexRetriever
 
 from config import PROCESSED_DATA_DIR
-from sg_trade_ragbot.utils.pydantic_models.models import RAGToolOutput, RetrievalItem, RAGToolError
+from sg_trade_ragbot.utils.pydantic_models.models import RAGToolOutput, RetrievalItem, RAGToolError, RetrievalValidationError
 
 import threading
 
-# Lightweight tool-call counter for tests / debugging
+import logging
+
+logger = logging.getLogger(__name__)
+
+# Lightweight tool-call counter for tests / debugging, replace?
 _tool_call_count = 0
 _tool_call_lock = threading.Lock()
 
@@ -66,7 +70,7 @@ def _rag_tool_helper(question: str, top_k: int = 3) -> RAGToolOutput:
       - The RAGToolOutput pydantic model.
 
     Failure behavior:
-      - On error the function raises a RAGToolError
+      - On error the function raises a RAGToolError or RetrievalValidationError
     """
     _increment_tool_call_count()
 
@@ -90,35 +94,47 @@ def _rag_tool_helper(question: str, top_k: int = 3) -> RAGToolOutput:
 
         retrievals = []
 
-        if hasattr(response, "source_nodes") and getattr(response, "source_nodes"):
-            try:
-                for sn in response.source_nodes:
-                    node = getattr(sn, "node", sn)
-                    # try node.get_text(), fallback to node.text or str(node)
-                    try:
-                        text = node.get_text()
-                    except Exception:
-                        text = getattr(node, "text", None) or str(node)
-                    node_id = getattr(node, "id", None) or getattr(node, "doc_id", None) or ""
-                    retrievals.append({"id": node_id, "text": text})
-            except Exception:
-                retrievals = []
+        for sn in getattr(response, "source_nodes", []) or []:
+            node = getattr(sn, "node", sn)
 
-        # Validate and convert to pydantic RetrievalItem objects
-        validated_retrievals = []
-        for r in retrievals:
+            # Prefer get_content(), then get_text(), then node.text attribute, then str(node)
+            content = None
+            if hasattr(node, "get_content"):
+                try:
+                    content = node.get_content()
+                except Exception:
+                    content = None
+
+            if not content and hasattr(node, "get_text"):
+                try:
+                    content = node.get_text()
+                except Exception:
+                    content = None
+
+            if not content:
+                content = getattr(node, "text", None) or str(node)
+
+            node_id = (getattr(node, "id", None) or
+                       getattr(node, "id_", None) or
+                       getattr(node, "doc_id", None) or
+                       "")
             try:
-                # Ensure id/text are strings (pydantic will validate types)
-                rid = "" if r.get("id") is None else str(r.get("id"))
-                rtext = "" if r.get("text") is None else str(r.get("text"))
-                item = RetrievalItem(id=rid, text=rtext)
-                validated_retrievals.append(item)
-            except Exception:
-                # Skip invalid retrieval entries
-                continue
+                item = RetrievalItem(id=str(node_id), content=str(content))
+                retrievals.append(item)
+            except Exception as e:
+                # Build helpful debug message (truncate long text/repr)
+                snippet = (str(content)[:200] + "...") if content and len(str(content)) > 200 else str(content)
+                node_repr = repr(node)
+                node_repr_snip = node_repr[:200] + "..." if len(node_repr) > 200 else node_repr
+                msg = (
+                    f"Failed to validate retrieval item for node_id={node_id!r}. "
+                    f"Validation error: {e}. Text snippet: {snippet!r}. Node repr: {node_repr_snip!r}"
+                )
+                logger.exception(msg)
+                raise RetrievalValidationError(msg) from e
 
         # Build the pydantic output model and return JSON
-        output = RAGToolOutput(answer=answer, retrievals=validated_retrievals)
+        output = RAGToolOutput(answer=answer, retrievals=retrievals)
 
         return output
 
