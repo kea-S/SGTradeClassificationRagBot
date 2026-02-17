@@ -8,11 +8,11 @@ providers:
       model_name: 'gpt-4o'
       local: false
 
-  - id: python:../provider.py
-    label: 'Agent: Llama3.3 70b remote'
-    config:
-      model_name: 'llama-3.3-70b-versatile'
-      local: false
+  # - id: python:../provider.py
+  #   label: 'Agent: Llama3.3 70b remote'
+  #   config:
+  #     model_name: 'llama-3.3-70b-versatile'
+  #     local: false
 
   - id: python:../provider.py
     label: 'Agent: qwen3 32b remote'
@@ -20,11 +20,11 @@ providers:
       model_name: 'qwen/qwen3-32b'
       local: false
 
-  - id: python:../provider.py
-    label: 'Agent: llama3.1 8b local'
-    config:
-      model_name: 'llama3.1:latest'
-      local: true
+  # - id: python:../provider.py
+  #   label: 'Agent: llama3.1 8b local'
+  #   config:
+  #     model_name: 'llama3.1:latest'
+  #     local: true
 
 tests:
   - vars:

@@ -9,6 +9,12 @@ from llama_index.core.retrievers import VectorIndexRetriever
 from config import PROCESSED_DATA_DIR
 from sg_trade_ragbot.utils.pydantic_models.models import RAGToolOutput, RetrievalItem, RAGToolError
 
+import threading
+
+# Lightweight tool-call counter for tests / debugging
+_tool_call_count = 0
+_tool_call_lock = threading.Lock()
+
 
 load_dotenv()
 
@@ -32,6 +38,25 @@ def _load_index():
     return _INDEX
 
 
+def _increment_tool_call_count() -> None:
+    global _tool_call_count
+    with _tool_call_lock:
+        _tool_call_count += 1
+
+
+def get_tool_call_count() -> int:
+    """Return the number of times the agent-facing tool has been invoked."""
+    with _tool_call_lock:
+        return _tool_call_count
+
+
+def reset_tool_call_count() -> None:
+    """Reset the invocation counter to zero (useful between test runs)."""
+    global _tool_call_count
+    with _tool_call_lock:
+        _tool_call_count = 0
+
+
 # Chunking is an issue. I suspect that chunks are too large for the smaller models
 def _rag_tool_helper(question: str, top_k: int = 3) -> RAGToolOutput:
     """
@@ -43,6 +68,8 @@ def _rag_tool_helper(question: str, top_k: int = 3) -> RAGToolOutput:
     Failure behavior:
       - On error the function raises a RAGToolError
     """
+    _increment_tool_call_count()
+
     try:
         # for now limit 3 since chunks reach more tokens than accepted
         # in llama? But honestly it shouldn't really be reaching this
@@ -102,9 +129,15 @@ def _rag_tool_helper(question: str, top_k: int = 3) -> RAGToolOutput:
 # @tool
 def rag_tool(question: str, top_k: int = 5) -> str:
     """
-    Agent-facing wrapper: returns JSON string on success or the legacy
-    "RAG tool error: ..." string on failure.
+    Query the persisted index for information and return a JSON-encoded response string.
+
+    Successful return value:
+      - The RAGToolOutput pydantic model.
+
+    Failure behavior:
+      - On error the function raises a RAGToolError
     """
+
     try:
         output = _rag_tool_helper(question, top_k=top_k)
 
