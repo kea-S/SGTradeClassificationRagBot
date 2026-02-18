@@ -92,3 +92,7 @@ The system generates a trace of the agent’s Chain of Thought (CoT) to show how
 * **Prompts:** Tweak templates in utils/prompts to change agent behavior.  
 * **Models:** Wrappers in utils/models abstract the LLM/embedding implementations. You can swap in your preferred LLM client by implementing the required interface.  
 * **Testing:** Tests live in tests/ and use pytest. Run them frequently during development.
+
+#### TODO
+- [] fix retrieval json parsing
+- [] fix chunking to be smaller and more efficient

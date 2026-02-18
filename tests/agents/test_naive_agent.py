@@ -4,7 +4,7 @@ from pydantic import ValidationError
 from dotenv import load_dotenv
 
 from sg_trade_ragbot.agents.naive_agent import get_naive_agent
-from sg_trade_ragbot.utils.models.models import REMOTE_LLAMA3, REMOTE_QWEN, REMOTE_GPT_OSS_LARGE
+from sg_trade_ragbot.utils.models.models import REMOTE_LLAMA3, REMOTE_QWEN, REMOTE_GPT_OSS_SMALL
 from sg_trade_ragbot.tools.RAGTool import rag_tool, get_tool_call_count, reset_tool_call_count
 from sg_trade_ragbot.utils.pydantic_models.models import RAGToolOutput
 
@@ -26,10 +26,12 @@ async def test_naive_agent_integration_call():
     assert (rag_tool in tools or any(getattr(t, "name", None) ==
             getattr(rag_tool, "name", None) for t in tools))
 
-    prompt = "Please provide the HS code for Live sheep, pure-bred and breeding"
+    prompt = "Give me the HS Code for solar panels"
 
     # Run the agent and expect a structured AgentOutput per LlamaIndex docs
     reset_tool_call_count()
+
+    naive_agent.dict()
 
     response = None
     try:
@@ -53,9 +55,10 @@ async def test_naive_agent_integration_call():
 
     # Convert to the expected Pydantic model using the agent helper if available
     try:
-        validated = RAGToolOutput.model_validate_json(response)
+        validated = RAGToolOutput.model_validate_json(str(response))
 
-        validated = RAGToolOutput(validated)
-        print(validated)
+        assert validated.retrievals is not None
+        assert validated.answer is not None
     except ValidationError as e:
         print(e.errors())
+        raise

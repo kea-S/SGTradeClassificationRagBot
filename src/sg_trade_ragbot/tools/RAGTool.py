@@ -156,6 +156,7 @@ def rag_tool(question: str, top_k: int = 5) -> str:
 
     try:
         output = _rag_tool_helper(question, top_k=top_k)
+        print("RAG Tool output: %s", output.model_dump_json())
 
         return output.model_dump_json()
     except RAGToolError as e:

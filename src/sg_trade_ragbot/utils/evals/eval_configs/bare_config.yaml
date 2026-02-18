@@ -8,16 +8,28 @@ providers:
       model_name: 'gpt-4o'
       local: false
 
+  - id: python:../provider.py
+    label: 'Agent: Llama3.3 70b remote'
+    config:
+      model_name: 'llama-3.3-70b-versatile'
+      local: false
+
   # - id: python:../provider.py
-  #   label: 'Agent: Llama3.3 70b remote'
+  #   label: 'Agent: qwen3 32b remote'
   #   config:
-  #     model_name: 'llama-3.3-70b-versatile'
+  #     model_name: 'qwen/qwen3-32b'
   #     local: false
 
   - id: python:../provider.py
-    label: 'Agent: qwen3 32b remote'
+    label: 'Agent: gpt-oss 120b remote'
     config:
-      model_name: 'qwen/qwen3-32b'
+      model_name: 'openai/gpt-oss-120b'
+      local: false
+
+  - id: python:../provider.py
+    label: 'Agent: gpt-oss 20b remote'
+    config:
+      model_name: 'openai/gpt-oss-120b'
       local: false
 
   # - id: python:../provider.py
@@ -32,3 +44,9 @@ tests:
       description: "Simple test case"
       query: "Live sheep, pure-bred and breeding"
       ground_truth: "0104.10.10"
+
+  - vars:
+      id: example-002
+      description: "Ambiguous test case"
+      query: "Modular solar-powered IoT sensors for agricultural moisture tracking"
+      ground_truth: "90.25"
